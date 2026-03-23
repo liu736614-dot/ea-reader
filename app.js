@@ -7,6 +7,7 @@ let fontSize = 18;
 let comments = {};
 let bookTitle = '';
 let activeInputParagraph = null;
+let lastExportedTimestamp = null; // 记录上次导出批注的时间
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -282,6 +283,7 @@ function loadFromStorage() {
             comments = data.comments || {};
             fontSize = data.fontSize || 18;
             bookTitle = data.bookTitle || '';
+            lastExportedTimestamp = data.lastExportedTimestamp || null;
             
             if (data.paragraphs && data.paragraphs.length > 0) {
                 allParagraphs = data.paragraphs;
@@ -305,6 +307,7 @@ function saveToStorage() {
             fontSize,
             bookTitle,
             paragraphs: allParagraphs,
+            lastExportedTimestamp,
             savedAt: new Date().toISOString()
         };
         localStorage.setItem('ea_reader_data', JSON.stringify(data));
@@ -332,3 +335,94 @@ document.addEventListener('keydown', function(e) {
         nextPage();
     }
 });
+
+// 导出新批注到剪贴板
+function exportNewComments() {
+    // 获取所有批注
+    const allCommentsList = [];
+    
+    for (let index in comments) {
+        if (comments[index] && comments[index].length > 0) {
+            comments[index].forEach(comment => {
+                // 只导出Elena的批注
+                if (comment.author === 'elena') {
+                    // 如果有上次导出时间，只导出新批注
+                    if (!lastExportedTimestamp || new Date(comment.timestamp) > new Date(lastExportedTimestamp)) {
+                        allCommentsList.push({
+                            index: parseInt(index),
+                            text: allParagraphs[index],
+                            comment: comment.text,
+                            timestamp: comment.timestamp
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    if (allCommentsList.length === 0) {
+        alert('没有新批注需要导出！');
+        return;
+    }
+    
+    // 按段落编号排序
+    allCommentsList.sort((a, b) => a.index - b.index);
+    
+    // 格式化输出
+    const now = new Date();
+    const dateStr = now.toLocaleString('zh-CN', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let output = `《${bookTitle}》批注导出\n`;
+    output += `导出时间：${dateStr}\n`;
+    output += `\n━━━━━━━━━━━━━━━━\n\n`;
+    
+    allCommentsList.forEach((item, idx) => {
+        const commentTime = new Date(item.timestamp).toLocaleString('zh-CN', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        output += `段落 ${item.index + 1}\n`;
+        output += `原文：${item.text}\n\n`;
+        output += `💗 Elena（${commentTime}）：\n${item.comment}\n`;
+        output += `\n━━━━━━━━━━━━━━━━\n\n`;
+    });
+    
+    output += `共 ${allCommentsList.length} 条新批注`;
+    
+    // 复制到剪贴板
+    navigator.clipboard.writeText(output).then(() => {
+        // 更新最后导出时间
+        lastExportedTimestamp = now.toISOString();
+        saveToStorage();
+        
+        alert(`✅ 成功复制 ${allCommentsList.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
+    }).catch(err => {
+        console.error('复制失败:', err);
+        // 如果复制失败，显示文本让用户手动复制
+        const textarea = document.createElement('textarea');
+        textarea.value = output;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            lastExportedTimestamp = now.toISOString();
+            saveToStorage();
+            alert(`✅ 成功复制 ${allCommentsList.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
+        } catch (e) {
+            alert('复制失败，请手动复制批注内容');
+            console.log(output);
+        }
+        document.body.removeChild(textarea);
+    });
+}
