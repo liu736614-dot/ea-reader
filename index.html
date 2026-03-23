@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>EA阅读器 · Elena & Ash</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe8f0 50%, #fff0f5 100%);
+            min-height: 100vh;
+            color: #2d2d2d;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px 25px;
+            background: white;
+            border-bottom: 3px solid #ffc0cb;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 26px;
+            color: #ff69b4;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            color: #999;
+            font-size: 13px;
+            font-style: italic;
+        }
+        
+        .upload-section {
+            max-width: 600px;
+            margin: 25px auto;
+            padding: 20px;
+        }
+        
+        .upload-area {
+            background: white;
+            border: 3px dashed #ffc0cb;
+            border-radius: 15px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
+        }
+        
+        .upload-area:active {
+            transform: scale(0.98);
+        }
+        
+        .upload-area.dragover {
+            border-color: #ff1493;
+            background: #ffe8f0;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .upload-text {
+            color: #ff69b4;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .upload-hint {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .controls {
+            max-width: 900px;
+            margin: 0 auto 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .font-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .font-label {
+            color: #ff69b4;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .font-btn {
+            background: white;
+            border: 2px solid #ffc0cb;
+            color: #ff69b4;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            min-width: 48px;
+            min-height: 48px;
+            touch-action: manipulation;
+        }
+        
+        .font-btn:active {
+            background: #ff69b4;
+            color: white;
+            transform: scale(0.95);
+        }
+        
+        .font-size-display {
+            color: #ff69b4;
+            font-weight: bold;
+            min-width: 55px;
+            text-align: center;
+            font-size: 15px;
+        }
+        
+        .page-control {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .page-btn {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            min-width: 70px;
+            min-height: 48px;
+            touch-action: manipulation;
+        }
+        
+        .page-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        
+        .page-btn:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .page-info {
+            color: #ff69b4;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .content {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(255, 105, 180, 0.15);
+            min-height: 400px;
+        }
+        
+        .book-title {
+            text-align: center;
+            font-size: 22px;
+            color: #ff69b4;
+            margin-bottom: 25px;
+            font-weight: 600;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ffe8f0;
+        }
+        
+        .paragraph {
+            margin-bottom: 20px;
+            padding: 16px;
+            border-radius: 10px;
+            line-height: 2;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            touch-action: manipulation;
+        }
+        
+        .paragraph:active {
+            background: #fffaf6;
+        }
+        
+        .paragraph.has-comment {
+            border-left: 4px solid #ffd700;
+            background: #fffef9;
+        }
+        
+        .paragraph.active {
+            background: #fff5f8;
+        }
+        
+        .paragraph-text {
+            color: #333;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        .comments {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ffe8f0;
+        }
+        
+        .comment {
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .comment.elena {
+            background: linear-gradient(135deg, #ffe8f0 0%, #fff0f5 100%);
+            margin-right: 20px;
+        }
+        
+        .comment.ash {
+            background: linear-gradient(135deg, #e8f4ff 0%, #f0f8ff 100%);
+            margin-left: 20px;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        
+        .comment.elena .comment-author {
+            color: #ff69b4;
+        }
+        
+        .comment.ash .comment-author {
+            color: #4a90e2;
+        }
+        
+        .comment-text {
+            color: #555;
+            line-height: 1.7;
+            word-wrap: break-word;
+        }
+        
+        .comment-input-area {
+            margin-top: 12px;
+            animation: fadeIn 0.3s;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ffc0cb;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Noto Serif SC', serif;
+            resize: vertical;
+            min-height: 100px;
+            transition: border 0.2s;
+            line-height: 1.6;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #ff69b4;
+        }
+        
+        .comment-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .comment-btn {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            min-height: 48px;
+            touch-action: manipulation;
+        }
+        
+        .comment-btn:active {
+            background: #ff1493;
+            transform: scale(0.95);
+        }
+        
+        .comment-btn.cancel {
+            background: #ddd;
+            color: #666;
+        }
+        
+        .comment-btn.cancel:active {
+            background: #ccc;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .empty-hint {
+            font-size: 14px;
+            color: #bbb;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .controls {
+                padding: 12px 15px;
+            }
+            
+            .font-control, .page-control {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .paragraph {
+                padding: 14px;
+            }
+            
+            .comment.elena {
+                margin-right: 10px;
+            }
+            
+            .comment.ash {
+                margin-left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📖 EA阅读器</h1>
+        <p>Elena & Ash 的专属共读空间</p>
+    </div>
+    
+    <div class="upload-section" id="uploadSection">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📚</div>
+            <div class="upload-text">点击或拖拽上传书籍</div>
+            <div class="upload-hint">支持 TXT 格式</div>
+        </div>
+        <input type="file" id="fileInput" accept=".txt">
+    </div>
+    
+    <div class="controls" id="controls" style="display: none;">
+        <div class="font-control">
+            <span class="font-label">字号</span>
+            <button class="font-btn" onclick="decreaseFontSize()">A−</button>
+            <span class="font-size-display" id="fontSizeDisplay">18px</span>
+            <button class="font-btn" onclick="increaseFontSize()">A+</button>
+        </div>
+        
+        <div class="page-control">
+            <button class="page-btn" onclick="prevPage()" id="prevBtn">上一页</button>
+            <span class="page-info" id="pageInfo">1 / 1</span>
+            <button class="page-btn" onclick="nextPage()" id="nextBtn">下一页</button>
+        </div>
+    </div>
+    
+    <div class="content" id="content">
+        <div class="empty-state">
+            <div class="empty-icon">📖</div>
+            <div class="empty-text">还没有上传书籍</div>
+            <div class="empty-hint">上传一本 TXT 文件开始共读吧 💕</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
