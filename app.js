@@ -66,7 +66,6 @@ function loadBook(file) {
         processBook(text, file.name);
     };
     
-    // 尝试多种编码
     reader.onerror = function() {
         alert('文件读取失败，请重试！');
     };
@@ -78,12 +77,10 @@ function loadBook(file) {
 function processBook(text, filename) {
     bookTitle = filename.replace('.txt', '');
     
-    // 分段处理：按空行或多个换行符分段
     const lines = text.split(/\n+/);
     allParagraphs = lines
         .map(line => line.trim())
         .filter(line => {
-            // 过滤空行和只有符号的行
             return line.length > 0 && !line.match(/^[\.…\s\-—_=]+$/);
         });
 
@@ -141,16 +138,22 @@ function renderPage() {
     });
 
     document.getElementById('content').innerHTML = html;
-    document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
-    document.getElementById('prevBtn').disabled = currentPage === 1;
-    document.getElementById('nextBtn').disabled = currentPage === totalPages;
-    
-    // 同时更新底部导航栏
-    if (document.getElementById('pageInfoBottom')) {
-        document.getElementById('pageInfoBottom').textContent = `${currentPage} / ${totalPages}`;
-        document.getElementById('prevBtnBottom').disabled = currentPage === 1;
-        document.getElementById('nextBtnBottom').disabled = currentPage === totalPages;
-    }
+
+    // 加 null 保护，防止找不到元素时 JS 崩掉
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (pageInfo) pageInfo.textContent = `${currentPage} / ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
+    // 更新底部导航栏
+    const pageInfoBottom = document.getElementById('pageInfoBottom');
+    const prevBtnBottom = document.getElementById('prevBtnBottom');
+    const nextBtnBottom = document.getElementById('nextBtnBottom');
+    if (pageInfoBottom) pageInfoBottom.textContent = `${currentPage} / ${totalPages}`;
+    if (prevBtnBottom) prevBtnBottom.disabled = currentPage === 1;
+    if (nextBtnBottom) nextBtnBottom.disabled = currentPage === totalPages;
 }
 
 // 切换批注输入框
@@ -182,7 +185,6 @@ function toggleCommentInput(index) {
         `;
         paragraph.appendChild(inputArea);
         
-        // 聚焦到输入框
         setTimeout(() => {
             const textarea = inputArea.querySelector('textarea');
             if (textarea) {
@@ -334,11 +336,9 @@ function escapeHtml(text) {
 
 // 键盘快捷键
 document.addEventListener('keydown', function(e) {
-    // 左箭头 - 上一页
     if (e.key === 'ArrowLeft' && !e.target.matches('textarea, input')) {
         prevPage();
     }
-    // 右箭头 - 下一页
     if (e.key === 'ArrowRight' && !e.target.matches('textarea, input')) {
         nextPage();
     }
@@ -346,15 +346,12 @@ document.addEventListener('keydown', function(e) {
 
 // 导出新批注到剪贴板
 function exportNewComments() {
-    // 获取所有批注
     const allCommentsList = [];
     
     for (let index in comments) {
         if (comments[index] && comments[index].length > 0) {
             comments[index].forEach(comment => {
-                // 只导出Elena的批注
                 if (comment.author === 'elena') {
-                    // 如果有上次导出时间，只导出新批注
                     if (!lastExportedTimestamp || new Date(comment.timestamp) > new Date(lastExportedTimestamp)) {
                         allCommentsList.push({
                             index: parseInt(index),
@@ -373,10 +370,8 @@ function exportNewComments() {
         return;
     }
     
-    // 按段落编号排序
     allCommentsList.sort((a, b) => a.index - b.index);
     
-    // 格式化输出
     const now = new Date();
     const dateStr = now.toLocaleString('zh-CN', { 
         year: 'numeric', 
@@ -406,16 +401,12 @@ function exportNewComments() {
     
     output += `共 ${allCommentsList.length} 条新批注`;
     
-    // 复制到剪贴板
     navigator.clipboard.writeText(output).then(() => {
-        // 更新最后导出时间
         lastExportedTimestamp = now.toISOString();
         saveToStorage();
-        
         alert(`✅ 成功复制 ${allCommentsList.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
     }).catch(err => {
         console.error('复制失败:', err);
-        // 如果复制失败，显示文本让用户手动复制
         const textarea = document.createElement('textarea');
         textarea.value = output;
         textarea.style.position = 'fixed';
