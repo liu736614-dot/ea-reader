@@ -391,6 +391,7 @@
             
             .content {
                 padding: 20px 15px;
+                margin-bottom: 80px;
             }
             
             .paragraph {
@@ -404,6 +405,60 @@
             .comment.ash {
                 margin-left: 10px;
             }
+        }
+        
+        /* 底部导航栏样式 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 2px solid #ffe8f0;
+            padding: 12px 20px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -4px 20px rgba(255, 105, 180, 0.1);
+            z-index: 100;
+        }
+        
+        .bottom-nav.show {
+            display: flex;
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        
+        .nav-btn.export {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .nav-btn:disabled {
+            background: #ddd;
+            opacity: 0.5;
+        }
+        
+        .nav-info {
+            color: #ff69b4;
+            font-weight: 600;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -429,16 +484,6 @@
             <span class="font-size-display" id="fontSizeDisplay">18px</span>
             <button class="font-btn" onclick="increaseFontSize()">A+</button>
         </div>
-        
-        <button class="page-btn" onclick="exportNewComments()" style="background: linear-gradient(135deg, #ffd700, #ffa500);">
-            📋 复制新批注
-        </button>
-        
-        <div class="page-control">
-            <button class="page-btn" onclick="prevPage()" id="prevBtn">上一页</button>
-            <span class="page-info" id="pageInfo">1 / 1</span>
-            <button class="page-btn" onclick="nextPage()" id="nextBtn">下一页</button>
-        </div>
     </div>
     
     <div class="content" id="content">
@@ -447,6 +492,13 @@
             <div class="empty-text">还没有上传书籍</div>
             <div class="empty-hint">上传一本 TXT 文件开始共读吧 💕</div>
         </div>
+    </div>
+    
+    <div class="bottom-nav" id="bottomNav">
+        <button class="nav-btn export" onclick="exportNewComments()">📋 复制</button>
+        <button class="nav-btn" onclick="prevPage()" id="prevBtnBottom">上一页</button>
+        <span class="nav-info" id="pageInfoBottom">1 / 1</span>
+        <button class="nav-btn" onclick="nextPage()" id="nextBtnBottom">下一页</button>
     </div>
 
     <script src="app.js"></script>
