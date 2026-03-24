@@ -104,6 +104,7 @@ function processBook(text, filename) {
 function showBook() {
     document.getElementById('uploadSection').style.display = 'none';
     document.getElementById('controls').style.display = 'flex';
+    document.getElementById('bottomNav').classList.add('show');
     renderPage();
 }
 
@@ -143,6 +144,13 @@ function renderPage() {
     document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
     document.getElementById('prevBtn').disabled = currentPage === 1;
     document.getElementById('nextBtn').disabled = currentPage === totalPages;
+    
+    // 同时更新底部导航栏
+    if (document.getElementById('pageInfoBottom')) {
+        document.getElementById('pageInfoBottom').textContent = `${currentPage} / ${totalPages}`;
+        document.getElementById('prevBtnBottom').disabled = currentPage === 1;
+        document.getElementById('nextBtnBottom').disabled = currentPage === totalPages;
+    }
 }
 
 // 切换批注输入框
