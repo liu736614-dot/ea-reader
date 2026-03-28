@@ -1,427 +1,502 @@
 // EA阅读器 - 主逻辑
-let currentPage = 1;
-let totalPages = 1;
-let paragraphsPerPage = 20;
-let allParagraphs = [];
-let fontSize = 18;
-let comments = {};
-let bookTitle = '';
-let activeInputParagraph = null;
-let lastExportedTimestamp = null; // 记录上次导出批注的时间
+let currentPage        = 1;
+let totalPages         = 1;
+let paragraphsPerPage  = 20;
+let allParagraphs      = [];
+let fontSize           = 18;
+let comments           = {};   // { globalIndex: [{selectedText, text, author, timestamp}] }
+let bookTitle          = '';
+let lastExportedTimestamp = null;
 
-// 页面加载时初始化
-document.addEventListener('DOMContentLoaded', function() {
+// 当前选取状态
+let pendingSelection = null;   // { text, paragraphIndex }
+
+// ─────────────────────────────────────────────
+// 初始化
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
     loadFromStorage();
     initUpload();
+    initSelectionListener();
 });
 
-// 初始化上传功能
+// ─────────────────────────────────────────────
+// 上传
+// ─────────────────────────────────────────────
 function initUpload() {
     const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('fileInput');
+    const fileInput  = document.getElementById('fileInput');
 
-    uploadArea.addEventListener('click', () => {
-        fileInput.click();
-    });
-
+    uploadArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('dragover');
     });
-
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            loadBook(files[0]);
-        }
+        if (e.dataTransfer.files.length > 0) loadBook(e.dataTransfer.files[0]);
     });
 }
 
-// 处理文件选择
 function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        loadBook(file);
-    }
+    if (e.target.files[0]) loadBook(e.target.files[0]);
 }
 
-// 加载书籍文件
 function loadBook(file) {
-    if (!file.name.endsWith('.txt')) {
-        alert('请上传 TXT 格式的文件！');
-        return;
-    }
-
+    if (!file.name.endsWith('.txt')) { alert('请上传 TXT 格式的文件！'); return; }
     const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        processBook(text, file.name);
-    };
-    
-    reader.onerror = function() {
-        alert('文件读取失败，请重试！');
-    };
-    
+    reader.onload  = (e) => processBook(e.target.result, file.name);
+    reader.onerror = ()  => alert('文件读取失败，请重试！');
     reader.readAsText(file, 'UTF-8');
 }
 
-// 处理书籍内容
 function processBook(text, filename) {
-    bookTitle = filename.replace('.txt', '');
-    
-    const lines = text.split(/\n+/);
-    allParagraphs = lines
-        .map(line => line.trim())
-        .filter(line => {
-            return line.length > 0 && !line.match(/^[\.…\s\-—_=]+$/);
-        });
+    bookTitle     = filename.replace('.txt', '');
+    allParagraphs = text.split(/\n+/)
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && !/^[\.…\s\-—_=]+$/.test(l));
 
-    if (allParagraphs.length === 0) {
-        alert('文件内容为空或格式不正确！');
-        return;
-    }
+    if (allParagraphs.length === 0) { alert('文件内容为空或格式不正确！'); return; }
 
-    totalPages = Math.ceil(allParagraphs.length / paragraphsPerPage);
+    totalPages  = Math.ceil(allParagraphs.length / paragraphsPerPage);
     currentPage = 1;
-    comments = {};
-    
+    comments    = {};
     saveToStorage();
     showBook();
 }
 
-// 显示书籍界面
 function showBook() {
     document.getElementById('uploadSection').style.display = 'none';
-    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('controls').style.display      = 'flex';
     document.getElementById('bottomNav').classList.add('show');
     renderPage();
 }
 
-// 渲染当前页面
+// ─────────────────────────────────────────────
+// 渲染
+// ─────────────────────────────────────────────
 function renderPage() {
     const start = (currentPage - 1) * paragraphsPerPage;
-    const end = start + paragraphsPerPage;
-    const pageParagraphs = allParagraphs.slice(start, end);
+    const end   = start + paragraphsPerPage;
+    const slice = allParagraphs.slice(start, end);
 
     let html = `<div class="book-title">${escapeHtml(bookTitle)}</div>`;
 
-    pageParagraphs.forEach((text, index) => {
-        const globalIndex = start + index;
-        const hasComment = comments[globalIndex] && comments[globalIndex].length > 0;
-        const commentClass = hasComment ? 'has-comment' : '';
-        
-        html += `<div class="paragraph ${commentClass}" onclick="toggleCommentInput(${globalIndex})">
-            <div class="paragraph-text" style="font-size: ${fontSize}px">${escapeHtml(text)}</div>`;
-        
+    slice.forEach((text, idx) => {
+        const gi         = start + idx;
+        const hasComment = comments[gi] && comments[gi].length > 0;
+
+        // Build paragraph text with highlights for every saved selection
+        let paraHtml = escapeHtml(text);
+        if (hasComment) {
+            comments[gi].forEach(c => {
+                if (c.selectedText) {
+                    const esc = escapeHtml(c.selectedText);
+                    // Replace first occurrence only (avoid double-wrapping)
+                    paraHtml = paraHtml.replace(esc,
+                        `<mark class="ea-hi">${esc}</mark>`);
+                }
+            });
+        }
+
+        html += `<div class="paragraph ${hasComment ? 'has-comment' : ''}" data-index="${gi}">
+            <div class="paragraph-text" style="font-size:${fontSize}px">${paraHtml}</div>`;
+
         if (hasComment) {
             html += '<div class="comments">';
-            comments[globalIndex].forEach(comment => {
+            comments[gi].forEach(c => {
+                const quoteHtml = c.selectedText
+                    ? `<div class="comment-quote">"${escapeHtml(c.selectedText)}"</div>` : '';
                 html += `
-                    <div class="comment ${comment.author}">
-                        <div class="comment-author">${comment.author === 'elena' ? '💗 Elena' : '💙 Ash'}</div>
-                        <div class="comment-text">${escapeHtml(comment.text)}</div>
-                    </div>
-                `;
+                    <div class="comment ${c.author}">
+                        <div class="comment-author">${c.author === 'elena' ? '💗 Elena' : '💙 Ash'}</div>
+                        ${quoteHtml}
+                        <div class="comment-text">${escapeHtml(c.text)}</div>
+                    </div>`;
             });
             html += '</div>';
         }
-        
+
         html += '</div>';
     });
 
     document.getElementById('content').innerHTML = html;
 
-    // 加 null 保护，防止找不到元素时 JS 崩掉
-    const pageInfo = document.getElementById('pageInfo');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    if (pageInfo) pageInfo.textContent = `${currentPage} / ${totalPages}`;
-    if (prevBtn) prevBtn.disabled = currentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
-
-    // 更新底部导航栏
-    const pageInfoBottom = document.getElementById('pageInfoBottom');
-    const prevBtnBottom = document.getElementById('prevBtnBottom');
-    const nextBtnBottom = document.getElementById('nextBtnBottom');
-    if (pageInfoBottom) pageInfoBottom.textContent = `${currentPage} / ${totalPages}`;
-    if (prevBtnBottom) prevBtnBottom.disabled = currentPage === 1;
-    if (nextBtnBottom) nextBtnBottom.disabled = currentPage === totalPages;
+    // Update nav (null-safe)
+    const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+    setEl('pageInfoBottom',  el => el.textContent = `${currentPage} / ${totalPages}`);
+    setEl('prevBtnBottom',   el => el.disabled = currentPage === 1);
+    setEl('nextBtnBottom',   el => el.disabled = currentPage === totalPages);
+    setEl('pageInfo',        el => el.textContent = `${currentPage} / ${totalPages}`);
+    setEl('prevBtn',         el => el.disabled = currentPage === 1);
+    setEl('nextBtn',         el => el.disabled = currentPage === totalPages);
 }
 
-// 切换批注输入框
-function toggleCommentInput(index) {
-    if (activeInputParagraph === index) {
-        activeInputParagraph = null;
-        renderPage();
-        return;
-    }
-
-    activeInputParagraph = index;
-    const paragraphs = document.querySelectorAll('.paragraph');
-    const localIndex = index - (currentPage - 1) * paragraphsPerPage;
-    const paragraph = paragraphs[localIndex];
-    
-    if (!paragraph) return;
-
-    paragraph.classList.add('active');
-
-    if (!paragraph.querySelector('.comment-input-area')) {
-        const inputArea = document.createElement('div');
-        inputArea.className = 'comment-input-area';
-        inputArea.innerHTML = `
-            <textarea class="comment-input" placeholder="Elena，在这里写下你的想法..." onclick="event.stopPropagation()"></textarea>
-            <div class="comment-buttons">
-                <button class="comment-btn" onclick="saveComment(${index}, event)">发送 🐾</button>
-                <button class="comment-btn cancel" onclick="cancelComment(${index}, event)">取消</button>
-            </div>
-        `;
-        paragraph.appendChild(inputArea);
-        
-        setTimeout(() => {
-            const textarea = inputArea.querySelector('textarea');
-            if (textarea) {
-                textarea.focus();
-            }
-        }, 100);
-    }
+// ─────────────────────────────────────────────
+// 文字选取 & 浮动批注按钮
+// ─────────────────────────────────────────────
+function initSelectionListener() {
+    document.addEventListener('mouseup',  handleSelectionEnd);
+    document.addEventListener('touchend', handleSelectionEnd);
 }
 
-// 保存批注
-function saveComment(index, e) {
-    e.stopPropagation();
-    const paragraph = e.target.closest('.paragraph');
-    const textarea = paragraph.querySelector('.comment-input');
-    const text = textarea.value.trim();
-    
-    if (!text) {
-        alert('请输入批注内容！');
-        return;
-    }
+function handleSelectionEnd(e) {
+    // 如果点的是工具栏本身，不处理
+    const toolbar = document.getElementById('selToolbar');
+    if (toolbar.contains(e.target)) return;
 
-    if (!comments[index]) {
-        comments[index] = [];
-    }
+    // 如果模态框已打开，不处理
+    if (document.getElementById('commentOverlay').classList.contains('visible')) return;
 
-    comments[index].push({
-        author: 'elena',
-        text: text,
-        timestamp: new Date().toISOString()
+    setTimeout(() => {
+        const sel  = window.getSelection();
+        const text = sel ? sel.toString().trim() : '';
+
+        if (!text || text.length < 2) {
+            hideSelToolbar();
+            return;
+        }
+
+        // 确认选区在阅读区域内
+        const content = document.getElementById('content');
+        if (!sel.rangeCount) { hideSelToolbar(); return; }
+        const range = sel.getRangeAt(0);
+        if (!content.contains(range.commonAncestorContainer)) { hideSelToolbar(); return; }
+
+        // 找到所在段落
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        const paraEl = node.closest('.paragraph');
+        if (!paraEl) { hideSelToolbar(); return; }
+
+        pendingSelection = {
+            text: text,
+            paragraphIndex: parseInt(paraEl.dataset.index)
+        };
+
+        // 定位工具栏
+        const rect = range.getBoundingClientRect();
+        showSelToolbar(rect.left + rect.width / 2, rect.top + window.scrollY - 48);
+    }, 60);
+}
+
+function showSelToolbar(x, y) {
+    const tb = document.getElementById('selToolbar');
+    tb.style.left = x + 'px';
+    tb.style.top  = Math.max(y, window.scrollY + 10) + 'px';
+    tb.classList.add('visible');
+}
+
+function hideSelToolbar() {
+    document.getElementById('selToolbar').classList.remove('visible');
+}
+
+// mousedown/touchstart on toolbar buttons — prevents selection from clearing
+function onAnnotateBtnDown(e) {
+    e.preventDefault();
+    openCommentModal();
+}
+
+function onCancelBtnDown(e) {
+    e.preventDefault();
+    clearPendingSelection();
+}
+
+function clearPendingSelection() {
+    pendingSelection = null;
+    hideSelToolbar();
+    if (window.getSelection) window.getSelection().removeAllRanges();
+}
+
+// ─────────────────────────────────────────────
+// 批注 Modal
+// ─────────────────────────────────────────────
+function openCommentModal() {
+    if (!pendingSelection) return;
+    hideSelToolbar();
+
+    document.getElementById('modalQuote').textContent = pendingSelection.text;
+    document.getElementById('commentInput').value     = '';
+    document.getElementById('notionStatus').textContent = '';
+    document.getElementById('notionStatus').className   = 'notion-status';
+
+    document.getElementById('commentOverlay').classList.add('visible');
+
+    setTimeout(() => document.getElementById('commentInput').focus(), 200);
+}
+
+function closeCommentModal() {
+    document.getElementById('commentOverlay').classList.remove('visible');
+    clearPendingSelection();
+}
+
+// Tap overlay background to close
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('commentOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeCommentModal();
     });
+    document.getElementById('settingsOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeSettings();
+    });
+});
+
+async function saveSelectionComment() {
+    const text = document.getElementById('commentInput').value.trim();
+    if (!text) { alert('请输入批注内容！'); return; }
+    if (!pendingSelection) return;
+
+    const gi = pendingSelection.paragraphIndex;
+    if (!comments[gi]) comments[gi] = [];
+
+    const entry = {
+        selectedText : pendingSelection.text,
+        text         : text,
+        author       : 'elena',
+        timestamp    : new Date().toISOString()
+    };
+    comments[gi].push(entry);
 
     saveToStorage();
-    activeInputParagraph = null;
-    renderPage();
+
+    // 同步到 Notion
+    const statusEl = document.getElementById('notionStatus');
+    const notionCfg = getNotionConfig();
+    if (notionCfg.apiKey && notionCfg.dbId) {
+        statusEl.textContent = '同步到 Notion 中...';
+        statusEl.className   = 'notion-status syncing';
+        const ok = await syncToNotion(pendingSelection.text, text, notionCfg);
+        if (ok) {
+            statusEl.textContent = '✅ 已同步到 Notion';
+            statusEl.className   = 'notion-status ok';
+        } else {
+            statusEl.textContent = '⚠️ Notion 同步失败，批注已本地保存';
+            statusEl.className   = 'notion-status err';
+        }
+        // 稍等再关闭
+        setTimeout(() => {
+            closeCommentModal();
+            renderPage();
+        }, 1000);
+    } else {
+        closeCommentModal();
+        renderPage();
+    }
 }
 
-// 取消批注
-function cancelComment(index, e) {
-    e.stopPropagation();
-    activeInputParagraph = null;
-    renderPage();
+// ─────────────────────────────────────────────
+// Notion 集成
+// ─────────────────────────────────────────────
+function getNotionConfig() {
+    try {
+        const s = localStorage.getItem('ea_notion_cfg');
+        return s ? JSON.parse(s) : { apiKey: '', dbId: '' };
+    } catch { return { apiKey: '', dbId: '' }; }
 }
 
-// 上一页
+async function syncToNotion(selectedText, comment, cfg) {
+    // 用 corsproxy.io 绕过浏览器 CORS 限制
+    const url = 'https://corsproxy.io/?https://api.notion.com/v1/pages';
+
+    const body = {
+        parent: { database_id: cfg.dbId.replace(/-/g, '') },
+        properties: {
+            '原文': {
+                title: [{ text: { content: selectedText } }]
+            },
+            'Elena批注': {
+                rich_text: [{ text: { content: comment } }]
+            },
+            'Ash批注': {
+                rich_text: []
+            }
+        }
+    };
+
+    try {
+        const resp = await fetch(url, {
+            method : 'POST',
+            headers: {
+                'Content-Type'  : 'application/json',
+                'Authorization' : `Bearer ${cfg.apiKey}`,
+                'Notion-Version': '2022-06-28'
+            },
+            body: JSON.stringify(body)
+        });
+        return resp.ok;
+    } catch (err) {
+        console.error('Notion sync error:', err);
+        return false;
+    }
+}
+
+// ─────────────────────────────────────────────
+// Settings Modal
+// ─────────────────────────────────────────────
+function openSettings() {
+    const cfg = getNotionConfig();
+    document.getElementById('notionApiKey').value = cfg.apiKey || '';
+    document.getElementById('notionDbId').value   = cfg.dbId   || '';
+    document.getElementById('settingsOverlay').classList.add('visible');
+}
+
+function closeSettings() {
+    document.getElementById('settingsOverlay').classList.remove('visible');
+}
+
+function saveSettings() {
+    const apiKey = document.getElementById('notionApiKey').value.trim();
+    const dbId   = document.getElementById('notionDbId').value.trim();
+    localStorage.setItem('ea_notion_cfg', JSON.stringify({ apiKey, dbId }));
+    closeSettings();
+    alert(apiKey && dbId ? '✅ Notion 设置已保存！' : '设置已保存（未填写则不同步）');
+}
+
+// ─────────────────────────────────────────────
+// 翻页 & 字号
+// ─────────────────────────────────────────────
 function prevPage() {
     if (currentPage > 1) {
         currentPage--;
-        activeInputParagraph = null;
+        clearPendingSelection();
         renderPage();
         saveToStorage();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
-// 下一页
 function nextPage() {
     if (currentPage < totalPages) {
         currentPage++;
-        activeInputParagraph = null;
+        clearPendingSelection();
         renderPage();
         saveToStorage();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
-// 增大字号
 function increaseFontSize() {
-    if (fontSize < 28) {
-        fontSize += 2;
-        updateFontSizeDisplay();
-        applyFontSize();
-        saveToStorage();
-    }
+    if (fontSize < 28) { fontSize += 2; updateFontSizeDisplay(); applyFontSize(); saveToStorage(); }
 }
 
-// 减小字号
 function decreaseFontSize() {
-    if (fontSize > 12) {
-        fontSize -= 2;
-        updateFontSizeDisplay();
-        applyFontSize();
-        saveToStorage();
-    }
+    if (fontSize > 12) { fontSize -= 2; updateFontSizeDisplay(); applyFontSize(); saveToStorage(); }
 }
 
-// 更新字号显示
 function updateFontSizeDisplay() {
     document.getElementById('fontSizeDisplay').textContent = fontSize + 'px';
 }
 
-// 应用字号到所有段落
 function applyFontSize() {
-    const paragraphs = document.querySelectorAll('.paragraph-text');
-    paragraphs.forEach(p => {
-        p.style.fontSize = fontSize + 'px';
-    });
+    document.querySelectorAll('.paragraph-text').forEach(p => p.style.fontSize = fontSize + 'px');
 }
 
-// 从localStorage加载数据
+// ─────────────────────────────────────────────
+// 本地存储
+// ─────────────────────────────────────────────
 function loadFromStorage() {
     try {
         const saved = localStorage.getItem('ea_reader_data');
-        if (saved) {
-            const data = JSON.parse(saved);
-            currentPage = data.currentPage || 1;
-            comments = data.comments || {};
-            fontSize = data.fontSize || 18;
-            bookTitle = data.bookTitle || '';
-            lastExportedTimestamp = data.lastExportedTimestamp || null;
-            
-            if (data.paragraphs && data.paragraphs.length > 0) {
-                allParagraphs = data.paragraphs;
-                totalPages = Math.ceil(allParagraphs.length / paragraphsPerPage);
-                showBook();
-            }
-            
-            updateFontSizeDisplay();
+        if (!saved) return;
+        const data = JSON.parse(saved);
+        currentPage           = data.currentPage  || 1;
+        comments              = data.comments      || {};
+        fontSize              = data.fontSize      || 18;
+        bookTitle             = data.bookTitle     || '';
+        lastExportedTimestamp = data.lastExportedTimestamp || null;
+
+        if (data.paragraphs && data.paragraphs.length > 0) {
+            allParagraphs = data.paragraphs;
+            totalPages    = Math.ceil(allParagraphs.length / paragraphsPerPage);
+            showBook();
         }
-    } catch (e) {
-        console.error('加载数据失败:', e);
-    }
+        updateFontSizeDisplay();
+    } catch (e) { console.error('加载数据失败:', e); }
 }
 
-// 保存到localStorage
 function saveToStorage() {
     try {
-        const data = {
-            currentPage,
-            comments,
-            fontSize,
-            bookTitle,
+        localStorage.setItem('ea_reader_data', JSON.stringify({
+            currentPage, comments, fontSize, bookTitle,
             paragraphs: allParagraphs,
             lastExportedTimestamp,
             savedAt: new Date().toISOString()
-        };
-        localStorage.setItem('ea_reader_data', JSON.stringify(data));
+        }));
     } catch (e) {
-        console.error('保存数据失败:', e);
+        console.error('保存失败:', e);
         alert('保存失败，可能是存储空间不足！');
     }
 }
 
-// HTML转义函数
+// ─────────────────────────────────────────────
+// 导出批注（复制到剪贴板）
+// ─────────────────────────────────────────────
+function exportNewComments() {
+    const list = [];
+
+    for (const index in comments) {
+        (comments[index] || []).forEach(c => {
+            if (c.author === 'elena') {
+                if (!lastExportedTimestamp || new Date(c.timestamp) > new Date(lastExportedTimestamp)) {
+                    list.push({ index: parseInt(index), ...c });
+                }
+            }
+        });
+    }
+
+    if (list.length === 0) { alert('没有新批注需要导出！'); return; }
+
+    list.sort((a, b) => a.index - b.index);
+
+    const now     = new Date();
+    const dateStr = now.toLocaleString('zh-CN', {
+        year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit'
+    });
+
+    let out = `《${bookTitle}》批注导出\n导出时间：${dateStr}\n\n━━━━━━━━━━━━━━━━\n\n`;
+
+    list.forEach(item => {
+        const t = new Date(item.timestamp).toLocaleString('zh-CN',
+            { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+        out += `段落 ${item.index + 1}\n`;
+        if (item.selectedText) out += `原文："${item.selectedText}"\n\n`;
+        out += `💗 Elena（${t}）：\n${item.text}\n\n━━━━━━━━━━━━━━━━\n\n`;
+    });
+
+    out += `共 ${list.length} 条新批注`;
+
+    const doAfterCopy = () => {
+        lastExportedTimestamp = now.toISOString();
+        saveToStorage();
+        alert(`✅ 成功复制 ${list.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
+    };
+
+    navigator.clipboard.writeText(out).then(doAfterCopy).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = out; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); doAfterCopy(); }
+        catch { alert('复制失败，请手动复制'); console.log(out); }
+        document.body.removeChild(ta);
+    });
+}
+
+// ─────────────────────────────────────────────
+// 工具函数
+// ─────────────────────────────────────────────
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
 }
 
 // 键盘快捷键
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowLeft' && !e.target.matches('textarea, input')) {
-        prevPage();
-    }
-    if (e.key === 'ArrowRight' && !e.target.matches('textarea, input')) {
-        nextPage();
-    }
+document.addEventListener('keydown', e => {
+    if (e.target.matches('textarea, input')) return;
+    if (e.key === 'ArrowLeft')  prevPage();
+    if (e.key === 'ArrowRight') nextPage();
 });
-
-// 导出新批注到剪贴板
-function exportNewComments() {
-    const allCommentsList = [];
-    
-    for (let index in comments) {
-        if (comments[index] && comments[index].length > 0) {
-            comments[index].forEach(comment => {
-                if (comment.author === 'elena') {
-                    if (!lastExportedTimestamp || new Date(comment.timestamp) > new Date(lastExportedTimestamp)) {
-                        allCommentsList.push({
-                            index: parseInt(index),
-                            text: allParagraphs[index],
-                            comment: comment.text,
-                            timestamp: comment.timestamp
-                        });
-                    }
-                }
-            });
-        }
-    }
-    
-    if (allCommentsList.length === 0) {
-        alert('没有新批注需要导出！');
-        return;
-    }
-    
-    allCommentsList.sort((a, b) => a.index - b.index);
-    
-    const now = new Date();
-    const dateStr = now.toLocaleString('zh-CN', { 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    let output = `《${bookTitle}》批注导出\n`;
-    output += `导出时间：${dateStr}\n`;
-    output += `\n━━━━━━━━━━━━━━━━\n\n`;
-    
-    allCommentsList.forEach((item, idx) => {
-        const commentTime = new Date(item.timestamp).toLocaleString('zh-CN', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        output += `段落 ${item.index + 1}\n`;
-        output += `原文：${item.text}\n\n`;
-        output += `💗 Elena（${commentTime}）：\n${item.comment}\n`;
-        output += `\n━━━━━━━━━━━━━━━━\n\n`;
-    });
-    
-    output += `共 ${allCommentsList.length} 条新批注`;
-    
-    navigator.clipboard.writeText(output).then(() => {
-        lastExportedTimestamp = now.toISOString();
-        saveToStorage();
-        alert(`✅ 成功复制 ${allCommentsList.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
-    }).catch(err => {
-        console.error('复制失败:', err);
-        const textarea = document.createElement('textarea');
-        textarea.value = output;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            lastExportedTimestamp = now.toISOString();
-            saveToStorage();
-            alert(`✅ 成功复制 ${allCommentsList.length} 条新批注！\n\n现在可以发给Ash啦 💕`);
-        } catch (e) {
-            alert('复制失败，请手动复制批注内容');
-            console.log(output);
-        }
-        document.body.removeChild(textarea);
-    });
-}
