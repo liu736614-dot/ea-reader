@@ -5,18 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>EA阅读器 · Elena & Ash</title>
+    <title>EA阅读器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
         body {
             font-family: 'Noto Serif SC', serif;
             background: linear-gradient(135deg, #fff5f7 0%, #ffe8f0 50%, #fff0f5 100%);
@@ -24,450 +19,314 @@
             color: #2d2d2d;
             overflow-x: hidden;
         }
-        
+
+        /* ── Header ── */
         .header {
             text-align: center;
-            padding: 30px 20px 25px;
+            padding: 18px 20px;
             background: white;
             border-bottom: 3px solid #ffc0cb;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(255, 105, 180, 0.1);
+            box-shadow: 0 2px 10px rgba(255,105,180,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        
-        .header h1 {
-            font-size: 26px;
-            color: #ff69b4;
-            font-weight: 600;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+
+        .header h1 { font-size: 22px; color: #ff69b4; font-weight: 600; letter-spacing: 1px; }
+
+        .settings-icon-btn {
+            background: none; border: none; font-size: 20px;
+            cursor: pointer; padding: 4px 8px; border-radius: 8px;
+            transition: background 0.2s; line-height: 1;
         }
-        
-        .header p {
-            color: #999;
-            font-size: 13px;
-            font-style: italic;
-        }
-        
-        .upload-section {
-            max-width: 600px;
-            margin: 25px auto;
-            padding: 20px;
-        }
-        
+        .settings-icon-btn:active { background: #ffe8f0; }
+
+        /* ── Upload ── */
+        .upload-section { max-width: 600px; margin: 25px auto; padding: 20px; }
+
         .upload-area {
-            background: white;
-            border: 3px dashed #ffc0cb;
-            border-radius: 15px;
-            padding: 50px 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
+            background: white; border: 3px dashed #ffc0cb; border-radius: 15px;
+            padding: 50px 30px; text-align: center; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 20px rgba(255,105,180,0.1);
         }
-        
-        .upload-area:active {
-            transform: scale(0.98);
-        }
-        
-        .upload-area.dragover {
-            border-color: #ff1493;
-            background: #ffe8f0;
-            transform: scale(1.02);
-        }
-        
-        .upload-icon {
-            font-size: 56px;
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-        
+        .upload-area:active { transform: scale(0.98); }
+        .upload-area.dragover { border-color: #ff1493; background: #ffe8f0; transform: scale(1.02); }
+
+        .upload-icon { font-size: 56px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-10px); }
         }
-        
-        .upload-text {
-            color: #ff69b4;
-            font-size: 18px;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-        
-        .upload-hint {
-            color: #999;
-            font-size: 14px;
-        }
-        
-        #fileInput {
-            display: none;
-        }
-        
+
+        .upload-text { color: #ff69b4; font-size: 18px; margin-bottom: 12px; font-weight: 600; }
+        .upload-hint { color: #999; font-size: 14px; }
+        #fileInput { display: none; }
+
+        /* ── Controls ── */
         .controls {
-            max-width: 900px;
-            margin: 0 auto 20px;
-            padding: 15px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            max-width: 900px; margin: 0 auto 16px;
+            padding: 10px 20px; background: white; border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(255,105,180,0.1);
+            display: flex; justify-content: center; align-items: center; gap: 10px;
         }
-        
-        .font-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .font-label {
-            color: #ff69b4;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
+
+        .font-label { color: #ff69b4; font-weight: 600; font-size: 14px; }
+
         .font-btn {
-            background: white;
-            border: 2px solid #ffc0cb;
-            color: #ff69b4;
-            padding: 10px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.2s;
-            min-width: 48px;
-            min-height: 48px;
-            touch-action: manipulation;
+            background: white; border: 2px solid #ffc0cb; color: #ff69b4;
+            padding: 7px 13px; border-radius: 10px; cursor: pointer;
+            font-size: 15px; font-weight: bold; transition: all 0.2s;
+            min-width: 42px; min-height: 42px; touch-action: manipulation;
         }
-        
-        .font-btn:active {
-            background: #ff69b4;
-            color: white;
-            transform: scale(0.95);
-        }
-        
+        .font-btn:active { background: #ff69b4; color: white; transform: scale(0.95); }
+
         .font-size-display {
-            color: #ff69b4;
-            font-weight: bold;
-            min-width: 55px;
-            text-align: center;
-            font-size: 15px;
+            color: #ff69b4; font-weight: bold;
+            min-width: 48px; text-align: center; font-size: 14px;
         }
-        
-        .page-control {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .page-btn {
-            background: linear-gradient(135deg, #ff69b4, #ff1493);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
-            min-width: 70px;
-            min-height: 48px;
-            touch-action: manipulation;
-        }
-        
-        .page-btn:active:not(:disabled) {
-            transform: scale(0.95);
-        }
-        
-        .page-btn:disabled {
-            background: #ddd;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
-        .page-info {
-            color: #ff69b4;
-            font-weight: 600;
-            font-size: 14px;
-            min-width: 60px;
-            text-align: center;
-        }
-        
+
+        /* ── Content ── */
         .content {
-            max-width: 800px;
-            margin: 0 auto 40px;
-            padding: 30px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(255, 105, 180, 0.15);
+            max-width: 800px; margin: 0 auto 110px;
+            padding: 26px 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 30px rgba(255,105,180,0.15);
             min-height: 400px;
         }
-        
+
         .book-title {
-            text-align: center;
-            font-size: 22px;
-            color: #ff69b4;
-            margin-bottom: 25px;
-            font-weight: 600;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ffe8f0;
+            text-align: center; font-size: 19px; color: #ff69b4;
+            margin-bottom: 20px; font-weight: 600;
+            padding-bottom: 14px; border-bottom: 2px solid #ffe8f0;
         }
-        
+
         .paragraph {
-            margin-bottom: 20px;
-            padding: 16px;
-            border-radius: 10px;
-            line-height: 2;
-            transition: all 0.2s;
-            cursor: pointer;
-            position: relative;
-            touch-action: manipulation;
+            margin-bottom: 16px; padding: 13px; border-radius: 10px;
+            line-height: 2; transition: background 0.2s; position: relative;
+            user-select: text; -webkit-user-select: text;
         }
-        
-        .paragraph:active {
-            background: #fffaf6;
+        .paragraph.has-comment { border-left: 4px solid #ffd700; background: #fffef9; }
+
+        .paragraph-text { color: #333; word-wrap: break-word; word-break: break-word; }
+
+        /* Highlight for annotated selections */
+        mark.ea-hi {
+            background: linear-gradient(120deg, #fff3a3 0%, #ffe066 100%);
+            border-radius: 3px; padding: 0 2px; cursor: pointer;
         }
-        
-        .paragraph.has-comment {
-            border-left: 4px solid #ffd700;
-            background: #fffef9;
-        }
-        
-        .paragraph.active {
-            background: #fff5f8;
-        }
-        
-        .paragraph-text {
-            color: #333;
-            word-wrap: break-word;
-            word-break: break-word;
-        }
-        
-        .comments {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #ffe8f0;
-        }
-        
+        mark.ea-hi:hover { background: linear-gradient(120deg, #ffe066 0%, #ffd700 100%); }
+
+        /* ── Comments ── */
+        .comments { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ffe8f0; }
+
         .comment {
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-top: 10px;
-            animation: fadeIn 0.3s;
+            padding: 10px 13px; border-radius: 10px;
+            margin-top: 8px; animation: fadeIn 0.3s;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity:0; transform:translateY(-8px); }
+            to   { opacity:1; transform:translateY(0); }
         }
-        
-        .comment.elena {
-            background: linear-gradient(135deg, #ffe8f0 0%, #fff0f5 100%);
-            margin-right: 20px;
+
+        .comment.elena { background: linear-gradient(135deg,#ffe8f0,#fff0f5); margin-right:14px; }
+        .comment.ash   { background: linear-gradient(135deg,#e8f4ff,#f0f8ff); margin-left:14px; }
+
+        .comment-author { font-weight:600; margin-bottom:4px; font-size:12px; }
+        .comment.elena .comment-author { color: #ff69b4; }
+        .comment.ash   .comment-author { color: #4a90e2; }
+
+        .comment-quote {
+            font-size: 12px; color: #888; margin-bottom: 5px;
+            font-style: italic; border-left: 2px solid #ffd700;
+            padding-left: 8px; line-height: 1.6;
         }
-        
-        .comment.ash {
-            background: linear-gradient(135deg, #e8f4ff 0%, #f0f8ff 100%);
-            margin-left: 20px;
+
+        .comment-text { color: #555; line-height: 1.7; word-wrap: break-word; }
+
+        /* ── Selection Toolbar ── */
+        .sel-toolbar {
+            position: fixed; z-index: 500;
+            background: #2d2d2d; border-radius: 20px;
+            padding: 5px 10px;
+            display: none; align-items: center; gap: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transform: translateX(-50%);
         }
-        
-        .comment-author {
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-        
-        .comment.elena .comment-author {
-            color: #ff69b4;
-        }
-        
-        .comment.ash .comment-author {
-            color: #4a90e2;
-        }
-        
-        .comment-text {
-            color: #555;
-            line-height: 1.7;
-            word-wrap: break-word;
-        }
-        
-        .comment-input-area {
-            margin-top: 12px;
-            animation: fadeIn 0.3s;
-        }
-        
-        .comment-input {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #ffc0cb;
-            border-radius: 10px;
-            font-size: 16px;
+        .sel-toolbar.visible { display: flex; }
+
+        .sel-btn {
+            background: #ff69b4; color: white; border: none;
+            padding: 5px 12px; border-radius: 13px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
             font-family: 'Noto Serif SC', serif;
-            resize: vertical;
-            min-height: 100px;
-            transition: border 0.2s;
-            line-height: 1.6;
+            touch-action: manipulation; transition: background 0.15s;
         }
-        
-        .comment-input:focus {
-            outline: none;
-            border-color: #ff69b4;
+        .sel-btn:active { background: #ff1493; }
+
+        .sel-btn.x-btn { background: #555; padding: 5px 9px; }
+
+        /* ── Comment Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            z-index: 600; display: none;
+            align-items: flex-end; justify-content: center;
         }
-        
-        .comment-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
+        .modal-overlay.visible { display: flex; }
+
+        .comment-modal {
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 22px 18px 18px; width: 100%;
+            max-width: 640px; max-height: 80vh;
+            overflow-y: auto; animation: slideUp 0.28s ease;
         }
-        
-        .comment-btn {
-            background: #ff69b4;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.2s;
-            min-height: 48px;
-            touch-action: manipulation;
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
         }
-        
-        .comment-btn:active {
-            background: #ff1493;
-            transform: scale(0.95);
+
+        .modal-section-label {
+            font-size: 12px; color: #ff69b4;
+            font-weight: 600; margin-bottom: 6px;
         }
-        
-        .comment-btn.cancel {
-            background: #ddd;
-            color: #666;
+
+        .modal-quote {
+            background: linear-gradient(120deg,#fffbe6,#fff8d0);
+            border-left: 3px solid #ffd700;
+            padding: 9px 13px; border-radius: 0 10px 10px 0;
+            font-size: 13px; color: #555; line-height: 1.8;
+            margin-bottom: 14px; font-style: italic;
         }
-        
-        .comment-btn.cancel:active {
-            background: #ccc;
+
+        .comment-input {
+            width: 100%; padding: 11px 13px;
+            border: 2px solid #ffc0cb; border-radius: 12px;
+            font-size: 16px; font-family: 'Noto Serif SC', serif;
+            resize: vertical; min-height: 88px;
+            transition: border 0.2s; line-height: 1.6;
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
+        .comment-input:focus { outline: none; border-color: #ff69b4; }
+
+        .notion-status {
+            font-size: 12px; color: #aaa;
+            margin-top: 6px; text-align: center; min-height: 16px;
         }
-        
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
+        .notion-status.syncing { color: #ff69b4; }
+        .notion-status.ok      { color: #52c41a; }
+        .notion-status.err     { color: #ff4d4f; }
+
+        .modal-buttons { display:flex; gap:10px; margin-top:10px; }
+
+        .modal-btn {
+            flex:1; border:none; padding:13px; border-radius:12px;
+            cursor:pointer; font-size:15px; font-weight:600;
+            font-family:'Noto Serif SC',serif;
+            touch-action:manipulation; transition:all 0.2s; min-height:48px;
         }
-        
-        .empty-text {
-            font-size: 18px;
-            margin-bottom: 10px;
+        .modal-btn.save  { background: linear-gradient(135deg,#ff69b4,#ff1493); color:white; }
+        .modal-btn.save:active  { opacity:0.85; transform:scale(0.98); }
+        .modal-btn.cancel { background:#f0f0f0; color:#888; }
+        .modal-btn.cancel:active { background:#e0e0e0; }
+
+        /* ── Settings Modal ── */
+        .settings-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.4);
+            z-index:700; display:none;
+            align-items:center; justify-content:center; padding:20px;
         }
-        
-        .empty-hint {
-            font-size: 14px;
-            color: #bbb;
+        .settings-overlay.visible { display:flex; }
+
+        .settings-panel {
+            background:white; border-radius:20px;
+            padding:22px 20px; width:100%; max-width:480px;
+            animation: fadeIn 0.25s;
         }
-        
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 22px;
-            }
-            
-            .controls {
-                padding: 12px 15px;
-            }
-            
-            .font-control, .page-control {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .content {
-                padding: 20px 15px;
-                margin-bottom: 80px;
-            }
-            
-            .paragraph {
-                padding: 14px;
-            }
-            
-            .comment.elena {
-                margin-right: 10px;
-            }
-            
-            .comment.ash {
-                margin-left: 10px;
-            }
+
+        .settings-title {
+            font-size:16px; font-weight:600; color:#ff69b4;
+            margin-bottom:16px;
         }
-        
-        /* 底部导航栏样式 */
+
+        .settings-field { margin-bottom:14px; }
+
+        .settings-field label {
+            display:block; font-size:12px; color:#888; margin-bottom:5px;
+        }
+
+        .settings-field input {
+            width:100%; padding:9px 13px;
+            border:2px solid #ffc0cb; border-radius:10px;
+            font-size:14px; font-family:'Noto Serif SC',serif;
+            transition:border 0.2s;
+        }
+        .settings-field input:focus { outline:none; border-color:#ff69b4; }
+
+        .settings-hint {
+            font-size:11px; color:#bbb;
+            margin-top:4px; line-height:1.5;
+        }
+
+        .settings-buttons { display:flex; gap:10px; margin-top:18px; }
+
+        .settings-btn {
+            flex:1; border:none; padding:12px; border-radius:12px;
+            cursor:pointer; font-size:14px; font-weight:600;
+            font-family:'Noto Serif SC',serif; touch-action:manipulation;
+        }
+        .settings-btn.save   { background:linear-gradient(135deg,#ff69b4,#ff1493); color:white; }
+        .settings-btn.cancel { background:#f0f0f0; color:#888; }
+
+        /* ── Empty State ── */
+        .empty-state { text-align:center; padding:60px 20px; color:#999; }
+        .empty-icon  { font-size:64px; margin-bottom:20px; opacity:0.5; }
+        .empty-text  { font-size:18px; margin-bottom:10px; }
+        .empty-hint  { font-size:14px; color:#bbb; }
+
+        /* ── Bottom Nav ── */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 2px solid #ffe8f0;
-            padding: 12px 20px;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 -4px 20px rgba(255, 105, 180, 0.1);
-            z-index: 100;
+            position:fixed; bottom:0; left:0; right:0;
+            background:white; border-top:2px solid #ffe8f0;
+            padding:8px 16px;
+            display:none; justify-content:center; align-items:center;
+            gap:8px; box-shadow:0 -4px 20px rgba(255,105,180,0.1); z-index:100;
         }
-        
-        .bottom-nav.show {
-            display: flex;
-        }
-        
+        .bottom-nav.show { display:flex; }
+
         .nav-btn {
-            background: linear-gradient(135deg, #ff69b4, #ff1493);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
-            touch-action: manipulation;
-            min-height: 44px;
+            background:linear-gradient(135deg,#ff69b4,#ff1493);
+            color:white; border:none; padding:7px 13px;
+            border-radius:8px; cursor:pointer; font-size:13px;
+            font-weight:600; font-family:'Noto Serif SC',serif;
+            transition:all 0.2s; touch-action:manipulation;
+            min-height:36px; white-space:nowrap;
         }
-        
-        .nav-btn.export {
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-        }
-        
-        .nav-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .nav-btn:disabled {
-            background: #ddd;
-            opacity: 0.5;
-        }
-        
+        .nav-btn.export { background:linear-gradient(135deg,#ffd700,#ffa500); }
+        .nav-btn:active { transform:scale(0.95); }
+        .nav-btn:disabled { background:#ddd; opacity:0.5; }
+
         .nav-info {
-            color: #ff69b4;
-            font-weight: 600;
-            font-size: 14px;
+            color:#ff69b4; font-weight:600;
+            font-size:13px; min-width:48px; text-align:center;
+        }
+
+        @media (max-width:768px) {
+            .header h1 { font-size:19px; }
+            .content { padding:16px 13px; margin-bottom:90px; }
         }
     </style>
 </head>
 <body>
+
     <div class="header">
         <h1>📖 EA阅读器</h1>
-        <p>Elena & Ash 的专属共读空间</p>
+        <button class="settings-icon-btn" onclick="openSettings()">⚙️</button>
     </div>
-    
+
     <div class="upload-section" id="uploadSection">
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📚</div>
@@ -476,16 +335,14 @@
         </div>
         <input type="file" id="fileInput" accept=".txt">
     </div>
-    
-    <div class="controls" id="controls" style="display: none;">
-        <div class="font-control">
-            <span class="font-label">字号</span>
-            <button class="font-btn" onclick="decreaseFontSize()">A−</button>
-            <span class="font-size-display" id="fontSizeDisplay">18px</span>
-            <button class="font-btn" onclick="increaseFontSize()">A+</button>
-        </div>
+
+    <div class="controls" id="controls" style="display:none;">
+        <span class="font-label">字号</span>
+        <button class="font-btn" onclick="decreaseFontSize()">A−</button>
+        <span class="font-size-display" id="fontSizeDisplay">18px</span>
+        <button class="font-btn" onclick="increaseFontSize()">A+</button>
     </div>
-    
+
     <div class="content" id="content">
         <div class="empty-state">
             <div class="empty-icon">📖</div>
@@ -493,11 +350,60 @@
             <div class="empty-hint">上传一本 TXT 文件开始共读吧 💕</div>
         </div>
     </div>
-    
+
+    <!-- Selection toolbar -->
+    <div class="sel-toolbar" id="selToolbar">
+        <button class="sel-btn" onmousedown="onAnnotateBtnDown(event)" ontouchstart="onAnnotateBtnDown(event)">💬 批注</button>
+        <button class="sel-btn x-btn" onmousedown="onCancelBtnDown(event)" ontouchstart="onCancelBtnDown(event)">✕</button>
+    </div>
+
+    <!-- Comment modal -->
+    <div class="modal-overlay" id="commentOverlay">
+        <div class="comment-modal" id="commentModal">
+            <div class="modal-section-label">选取原文</div>
+            <div class="modal-quote" id="modalQuote"></div>
+            <div class="modal-section-label">💗 Elena 的批注</div>
+            <textarea class="comment-input" id="commentInput" placeholder="写下你的想法..."></textarea>
+            <div class="notion-status" id="notionStatus"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn save"   onclick="saveSelectionComment()">保存 🐾</button>
+                <button class="modal-btn cancel"  onclick="closeCommentModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings modal -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-panel">
+            <div class="settings-title">⚙️ Notion 同步设置</div>
+
+            <div class="settings-field">
+                <label>Integration Token（API Key）</label>
+                <input type="password" id="notionApiKey" placeholder="secret_xxxxxxxxxxxx">
+                <div class="settings-hint">notion.so/my-integrations 创建后获取；需将 integration 分享给目标数据库</div>
+            </div>
+
+            <div class="settings-field">
+                <label>Database ID</label>
+                <input type="text" id="notionDbId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                <div class="settings-hint">
+                    数据库URL中 notion.so/<b>这一串</b>?v= 的部分（32位）<br>
+                    数据库需三列：<b>原文</b>（标题列）、<b>Elena批注</b>、<b>Ash批注</b>（均为文本列）
+                </div>
+            </div>
+
+            <div class="settings-buttons">
+                <button class="settings-btn save"   onclick="saveSettings()">保存</button>
+                <button class="settings-btn cancel"  onclick="closeSettings()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom nav -->
     <div class="bottom-nav" id="bottomNav">
-        <button class="nav-btn export" onclick="exportNewComments()">📋 复制</button>
+        <button class="nav-btn export"  onclick="exportNewComments()">📋 复制</button>
         <button class="nav-btn" onclick="prevPage()" id="prevBtnBottom">上一页</button>
-        <span class="nav-info" id="pageInfoBottom">1 / 1</span>
+        <span  class="nav-info"          id="pageInfoBottom">1 / 1</span>
         <button class="nav-btn" onclick="nextPage()" id="nextBtnBottom">下一页</button>
     </div>
 
