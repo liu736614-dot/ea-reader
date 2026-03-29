@@ -140,54 +140,63 @@ function renderPage() {
 // 文字选取 & 浮动批注按钮
 // ─────────────────────────────────────────────
 function initSelectionListener() {
-    document.addEventListener('mouseup',  handleSelectionEnd);
-    document.addEventListener('touchend', handleSelectionEnd);
+    // selectionchange 在用户调整选择柄后也会触发，比 touchend 更可靠
+    document.addEventListener('selectionchange', debounce(handleSelectionChange, 350));
 }
 
-function handleSelectionEnd(e) {
-    // 如果点的是工具栏本身，不处理
-    const toolbar = document.getElementById('selToolbar');
-    if (toolbar.contains(e.target)) return;
+function debounce(fn, delay) {
+    var timer;
+    return function() {
+        clearTimeout(timer);
+        timer = setTimeout(fn, delay);
+    };
+}
 
-    // 如果模态框已打开，不处理
+function handleSelectionChange() {
+    // 模态框打开时不处理
     if (document.getElementById('commentOverlay').classList.contains('visible')) return;
 
-    setTimeout(() => {
-        const sel  = window.getSelection();
-        const text = sel ? sel.toString().trim() : '';
+    var sel  = window.getSelection();
+    var text = sel ? sel.toString().trim() : '';
 
-        if (!text || text.length < 2) {
-            hideSelToolbar();
-            return;
-        }
+    if (!text || text.length < 2) {
+        hideSelToolbar();
+        return;
+    }
 
-        // 确认选区在阅读区域内
-        const content = document.getElementById('content');
-        if (!sel.rangeCount) { hideSelToolbar(); return; }
-        const range = sel.getRangeAt(0);
-        if (!content.contains(range.commonAncestorContainer)) { hideSelToolbar(); return; }
+    // 确认选区在阅读内容区域内
+    if (!sel.rangeCount) { hideSelToolbar(); return; }
+    var range   = sel.getRangeAt(0);
+    var content = document.getElementById('content');
+    if (!content || !content.contains(range.commonAncestorContainer)) {
+        hideSelToolbar();
+        return;
+    }
 
-        // 找到所在段落
-        let node = range.commonAncestorContainer;
-        if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
-        const paraEl = node.closest('.paragraph');
-        if (!paraEl) { hideSelToolbar(); return; }
+    // 找到所在段落
+    var node = range.commonAncestorContainer;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    var paraEl = node.closest ? node.closest('.paragraph') : null;
+    if (!paraEl) { hideSelToolbar(); return; }
 
-        pendingSelection = {
-            text: text,
-            paragraphIndex: parseInt(paraEl.dataset.index)
-        };
+    pendingSelection = {
+        text: text,
+        paragraphIndex: parseInt(paraEl.dataset.index)
+    };
 
-        // 定位工具栏
-        const rect = range.getBoundingClientRect();
-        showSelToolbar(rect.left + rect.width / 2, rect.top + window.scrollY - 48);
-    }, 60);
+    // 定位工具栏
+    // rect 是相对视口的坐标，工具栏是 position:fixed，不能加 scrollY！
+    var rect = range.getBoundingClientRect();
+    var x    = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
+    var y    = rect.top - 52;  // 在选区上方，纯视口坐标
+    showSelToolbar(x, y);
 }
 
 function showSelToolbar(x, y) {
-    const tb = document.getElementById('selToolbar');
+    var tb = document.getElementById('selToolbar');
     tb.style.left = x + 'px';
-    tb.style.top  = Math.max(y, window.scrollY + 10) + 'px';
+    // 不加 scrollY，固定定位只用视口坐标，最小留 10px 不超出顶部
+    tb.style.top  = Math.max(y, 10) + 'px';
     tb.classList.add('visible');
 }
 
