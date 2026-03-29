@@ -158,6 +158,16 @@
             transform: translateX(-50%);
         }
         .sel-toolbar.visible { display: flex; }
+        /* 小三角朝上（工具栏在选区下方） */
+        .sel-toolbar::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #2d2d2d;
+        }
 
         .sel-btn {
             background: #ff69b4; color: white; border: none;
