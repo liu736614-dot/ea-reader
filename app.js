@@ -174,9 +174,18 @@ function handleSelectionChange() {
     }
 
     // 找到所在段落
-    var node = range.commonAncestorContainer;
-    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
-    var paraEl = node.closest ? node.closest('.paragraph') : null;
+    // 优先用 startContainer（选区起点）找段落，这样跨段落时也能归到第一个段落
+    var startNode = range.startContainer;
+    if (startNode.nodeType === Node.TEXT_NODE) startNode = startNode.parentElement;
+    var paraEl = startNode.closest ? startNode.closest('.paragraph') : null;
+
+    // 如果起点也不在段落里（极少数情况），再试 commonAncestorContainer
+    if (!paraEl) {
+        var ancestor = range.commonAncestorContainer;
+        if (ancestor.nodeType === Node.TEXT_NODE) ancestor = ancestor.parentElement;
+        paraEl = ancestor.closest ? ancestor.closest('.paragraph') : null;
+    }
+
     if (!paraEl) { hideSelToolbar(); return; }
 
     pendingSelection = {
@@ -184,19 +193,21 @@ function handleSelectionChange() {
         paragraphIndex: parseInt(paraEl.dataset.index)
     };
 
-    // 定位工具栏
-    // rect 是相对视口的坐标，工具栏是 position:fixed，不能加 scrollY！
-    var rect = range.getBoundingClientRect();
-    var x    = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
-    var y    = rect.top - 52;  // 在选区上方，纯视口坐标
-    showSelToolbar(x, y);
+    // 定位工具栏：显示在选区【下方】，避开手机系统「复制/全选」菜单（它出现在上方）
+    // rect 是视口坐标，工具栏 position:fixed，不能加 scrollY
+    var rect      = range.getBoundingClientRect();
+    var x         = Math.max(70, Math.min(rect.left + rect.width / 2, window.innerWidth - 70));
+    var yBelow    = rect.bottom + 12;
+    var navHeight = 60; // 底部导航栏高度
+    // 如果下方空间不够（离底部导航太近），就显示在上方
+    var y = (yBelow + 44 + navHeight < window.innerHeight) ? yBelow : rect.top - 52;
+    showSelToolbar(x, Math.max(y, 10));
 }
 
 function showSelToolbar(x, y) {
     var tb = document.getElementById('selToolbar');
     tb.style.left = x + 'px';
-    // 不加 scrollY，固定定位只用视口坐标，最小留 10px 不超出顶部
-    tb.style.top  = Math.max(y, 10) + 'px';
+    tb.style.top  = y + 'px';
     tb.classList.add('visible');
 }
 
