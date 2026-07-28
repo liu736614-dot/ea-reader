@@ -5,230 +5,272 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>EA阅读器</title>
+    <title>共读小屋 · EA阅读器</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
+        :root {
+            --pink: #ff6fa5;
+            --pink-deep: #e8477f;
+            --pink-soft: #ffe3ec;
+            --blue: #4a90e2;
+            --blue-soft: #e8f2ff;
+            --ink: #33302e;
+            --paper: #fffdfb;
+        }
+
         body {
             font-family: 'Noto Serif SC', serif;
-            background: linear-gradient(135deg, #fff5f7 0%, #ffe8f0 50%, #fff0f5 100%);
+            background: linear-gradient(160deg, #fff6f8 0%, #ffeef3 45%, #fdf3f7 100%);
             min-height: 100vh;
-            color: #2d2d2d;
+            color: var(--ink);
             overflow-x: hidden;
         }
 
         /* ── Header ── */
         .header {
-            text-align: center;
-            padding: 16px 20px;
-            background: white;
-            border-bottom: 3px solid #ffc0cb;
-            position: sticky;
-            top: 0;
-            z-index: 200;
-            box-shadow: 0 2px 10px rgba(255,105,180,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--pink-soft);
+            position: sticky; top: 0; z-index: 200;
         }
-        .header h1 { font-size: 22px; color: #ff69b4; font-weight: 600; letter-spacing: 1px; }
+        .header h1 {
+            font-family: 'Quicksand', 'Noto Serif SC', serif;
+            font-size: 19px; color: var(--pink-deep); font-weight: 600; letter-spacing: 0.5px;
+        }
+        .icon-btn {
+            width: 38px; height: 38px; border-radius: 12px; border: none;
+            background: var(--pink-soft); color: var(--pink-deep);
+            font-size: 17px; cursor: pointer; display: none;
+            align-items: center; justify-content: center;
+            touch-action: manipulation; transition: transform 0.15s;
+        }
+        .icon-btn:active { transform: scale(0.9); }
+
+        /* ── Progress bar ── */
+        .progress-track { height: 3px; background: var(--pink-soft); }
+        .progress-fill   { height: 100%; width: 0%; background: linear-gradient(90deg,var(--pink),var(--pink-deep)); transition: width 0.3s; }
 
         /* ── Upload ── */
-        .upload-section { max-width: 600px; margin: 25px auto; padding: 20px; }
+        .upload-section { max-width: 560px; margin: 30px auto; padding: 20px; }
         .upload-area {
-            background: white; border: 3px dashed #ffc0cb; border-radius: 15px;
-            padding: 50px 30px; text-align: center; cursor: pointer;
-            transition: all 0.3s; box-shadow: 0 4px 20px rgba(255,105,180,0.1);
+            background: var(--paper); border: 2px dashed #ffc6d9; border-radius: 20px;
+            padding: 54px 30px; text-align: center; cursor: pointer;
+            transition: all 0.25s; box-shadow: 0 10px 40px rgba(255,111,165,0.1);
         }
         .upload-area:active { transform: scale(0.98); }
-        .upload-area.dragover { border-color: #ff1493; background: #ffe8f0; }
-        .upload-icon { font-size: 56px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
-        .upload-text { color: #ff69b4; font-size: 18px; margin-bottom: 12px; font-weight: 600; }
-        .upload-hint { color: #999; font-size: 14px; }
+        .upload-area.dragover { border-color: var(--pink); background: var(--pink-soft); }
+        .upload-icon { font-size: 52px; margin-bottom: 18px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+        .upload-text { color: var(--pink-deep); font-size: 17px; margin-bottom: 10px; font-weight: 600; }
+        .upload-hint { color: #b79; font-size: 13px; opacity: 0.7; }
         #fileInput { display: none; }
 
         /* ── Controls ── */
         .controls {
-            max-width: 900px; margin: 0 auto 16px;
-            padding: 10px 20px; background: white; border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(255,105,180,0.1);
+            max-width: 900px; margin: 14px auto; padding: 0 18px;
             display: flex; justify-content: center; align-items: center; gap: 10px;
         }
-        .font-label { color: #ff69b4; font-weight: 600; font-size: 14px; }
+        .font-label { color: var(--pink-deep); font-weight: 600; font-size: 13px; }
         .font-btn {
-            background: white; border: 2px solid #ffc0cb; color: #ff69b4;
-            padding: 7px 13px; border-radius: 10px; cursor: pointer;
-            font-size: 15px; font-weight: bold; min-width: 42px; min-height: 42px;
+            background: white; border: 1.5px solid var(--pink-soft); color: var(--pink-deep);
+            padding: 6px 12px; border-radius: 10px; cursor: pointer;
+            font-size: 14px; font-weight: 700; min-width: 40px; min-height: 40px;
             touch-action: manipulation; transition: all 0.2s;
         }
-        .font-btn:active { background: #ff69b4; color: white; transform: scale(0.95); }
-        .font-size-display { color: #ff69b4; font-weight: bold; min-width: 48px; text-align: center; font-size: 14px; }
+        .font-btn:active { background: var(--pink); color: white; transform: scale(0.94); }
+        .font-size-display { color: var(--pink-deep); font-weight: 600; min-width: 44px; text-align: center; font-size: 13px; }
 
         /* ── Content ── */
         .content {
-            max-width: 800px; margin: 0 auto 100px;
-            padding: 26px 18px; background: white;
-            border-radius: 15px; box-shadow: 0 8px 30px rgba(255,105,180,0.15);
+            max-width: 760px; margin: 0 auto 110px;
+            padding: 30px 22px; background: var(--paper);
+            border-radius: 18px; box-shadow: 0 12px 40px rgba(255,111,165,0.12);
             min-height: 400px;
-            /* 允许文字选取 */
-            -webkit-user-select: text;
-            user-select: text;
+            -webkit-user-select: text; user-select: text;
         }
         .book-title {
-            text-align: center; font-size: 19px; color: #ff69b4;
+            text-align: center; font-size: 14px; color: #c88;
+            margin-bottom: 4px; font-weight: 500; letter-spacing: 1px; opacity: 0.75;
+        }
+        .chapter-title {
+            text-align: center; font-size: 19px; color: var(--pink-deep);
             margin-bottom: 20px; font-weight: 600;
-            padding-bottom: 14px; border-bottom: 2px solid #ffe8f0;
+            padding-bottom: 14px; border-bottom: 1px solid var(--pink-soft);
         }
+        .chapter-note {
+            background: linear-gradient(135deg,#fffbe8,#fff8ee);
+            border: 1px solid #ffe6a8; border-radius: 12px;
+            padding: 12px 14px; margin-bottom: 20px; font-size: 13px; color: #8a6d2f;
+        }
+        .note-label { font-weight: 700; margin-right: 4px; }
+        .note-text { margin-top: 6px; line-height: 1.7; }
+
         .paragraph {
-            margin-bottom: 16px; padding: 13px; border-radius: 10px;
-            line-height: 2; position: relative;
+            margin-bottom: 18px; padding: 12px 4px; border-radius: 10px;
+            line-height: 2.05; position: relative;
         }
-        .paragraph.has-comment { border-left: 4px solid #ffd700; background: #fffef9; }
-        .paragraph-text { color: #333; word-wrap: break-word; word-break: break-word; }
+        .paragraph.has-comment { border-left: 3px solid #ffd166; padding-left: 12px; background: #fffdf6; }
+        .paragraph-text { color: #3a3532; word-wrap: break-word; word-break: break-word; }
 
         mark.ea-hi {
-            background: #fff176; border-radius: 3px; padding: 0 2px;
+            background: #fff2a8; border-radius: 3px; padding: 0 2px;
             -webkit-text-decoration: underline; text-decoration: underline;
-            -webkit-text-decoration-color: #ffd700; text-decoration-color: #ffd700;
+            -webkit-text-decoration-color: #ffd166; text-decoration-color: #ffd166;
         }
 
         /* ── Comments ── */
-        .comments { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ffe8f0; }
-        .comment { padding: 10px 13px; border-radius: 10px; margin-top: 8px; }
-        .comment.elena { background: linear-gradient(135deg,#ffe8f0,#fff0f5); margin-right: 14px; }
-        .comment.ash   { background: linear-gradient(135deg,#e8f4ff,#f0f8ff); margin-left: 14px; }
-        .comment-author { font-weight: 600; margin-bottom: 4px; font-size: 12px; }
-        .comment.elena .comment-author { color: #ff69b4; }
-        .comment.ash   .comment-author { color: #4a90e2; }
+        .comments { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--pink-soft); }
+        .comment { padding: 10px 13px; border-radius: 12px; margin-top: 8px; }
+        .comment.elena { background: linear-gradient(135deg,var(--pink-soft),#fff5f9); margin-right: 16px; }
+        .comment.ash   { background: linear-gradient(135deg,var(--blue-soft),#f2f8ff); margin-left: 16px; }
+        .comment-author { font-weight: 700; margin-bottom: 4px; font-size: 12px; }
+        .comment.elena .comment-author { color: var(--pink-deep); }
+        .comment.ash   .comment-author { color: var(--blue); }
         .comment-quote {
-            font-size: 12px; color: #888; margin-bottom: 5px; font-style: italic;
-            border-left: 2px solid #ffd700; padding-left: 8px; line-height: 1.6;
+            font-size: 12px; color: #999; margin-bottom: 5px; font-style: italic;
+            border-left: 2px solid #ffd166; padding-left: 8px; line-height: 1.6;
         }
-        .comment-text { color: #555; line-height: 1.7; word-wrap: break-word; }
+        .comment-text { color: #555; line-height: 1.75; word-wrap: break-word; }
 
         /* ── Selection Toolbar ── */
-        /* 显示在选区下方，避开系统的「复制/全选」菜单 */
         #selToolbar {
-            position: fixed;
-            z-index: 9999;
-            background: #222;
-            border-radius: 22px;
-            padding: 6px 10px;
-            display: none;
-            align-items: center;
-            gap: 6px;
+            position: fixed; z-index: 9999;
+            background: #2b2725; border-radius: 22px; padding: 6px 10px;
+            display: none; align-items: center; gap: 6px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-            /* 横向居中靠 left + transform */
             transform: translateX(-50%);
-            /* 小三角朝上（工具栏在选区下方） */
         }
         #selToolbar.show { display: flex; }
         #selToolbar::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 7px solid transparent;
-            border-bottom-color: #222;
+            content: ''; position: absolute; bottom: 100%; left: 50%;
+            transform: translateX(-50%); border: 7px solid transparent;
+            border-bottom-color: #2b2725;
         }
         .sel-btn {
-            background: #ff69b4; color: white; border: none;
+            background: var(--pink); color: white; border: none;
             padding: 6px 14px; border-radius: 14px;
             font-size: 13px; font-weight: 600;
             font-family: 'Noto Serif SC', serif;
             cursor: pointer; touch-action: manipulation;
             -webkit-user-select: none; user-select: none;
         }
-        .sel-btn:active { background: #ff1493; }
+        .sel-btn:active { background: var(--pink-deep); }
         .sel-btn.cancel-btn { background: #555; padding: 6px 10px; }
 
-        /* ── Comment Modal (bottom sheet) ── */
+        /* ── Modal (bottom sheet) ── */
         .overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            position: fixed; inset: 0; background: rgba(30,20,25,0.45);
             z-index: 1000; display: none;
             align-items: flex-end; justify-content: center;
         }
         .overlay.show { display: flex; }
         .modal-box {
-            background: white; border-radius: 20px 20px 0 0;
+            background: white; border-radius: 22px 22px 0 0;
             padding: 22px 18px 36px; width: 100%; max-width: 640px;
             max-height: 80vh; overflow-y: auto;
             animation: slideUp 0.25s ease;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-handle { width: 38px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 18px; }
-        .modal-label { font-size: 12px; color: #ff69b4; font-weight: 600; margin-bottom: 6px; }
+        .modal-handle { width: 38px; height: 4px; background: #eee; border-radius: 2px; margin: 0 auto 18px; }
+        .modal-label { font-size: 12px; color: var(--pink-deep); font-weight: 700; margin-bottom: 6px; }
         .modal-quote {
-            background: #fffbe6; border-left: 3px solid #ffd700;
+            background: #fffbe6; border-left: 3px solid #ffd166;
             padding: 10px 13px; border-radius: 0 8px 8px 0;
             font-size: 14px; color: #555; line-height: 1.7;
             margin-bottom: 14px; word-break: break-word;
             max-height: 100px; overflow-y: auto;
         }
         .comment-input {
-            width: 100%; padding: 12px; border: 2px solid #ffc0cb; border-radius: 12px;
+            width: 100%; padding: 12px; border: 1.5px solid var(--pink-soft); border-radius: 12px;
             font-size: 16px; font-family: 'Noto Serif SC', serif;
             resize: vertical; min-height: 100px; line-height: 1.7; color: #333;
         }
-        .comment-input:focus { outline: none; border-color: #ff69b4; }
+        .comment-input:focus { outline: none; border-color: var(--pink); }
         .modal-buttons { display: flex; gap: 10px; margin-top: 12px; }
         .modal-btn {
             flex: 1; border: none; padding: 13px; border-radius: 12px;
             font-size: 15px; font-weight: 600; font-family: 'Noto Serif SC', serif;
             cursor: pointer; touch-action: manipulation; min-height: 48px;
         }
-        .modal-btn.save   { background: linear-gradient(135deg,#ff69b4,#ff1493); color: white; }
-        .modal-btn.cancel { background: #f0f0f0; color: #888; }
+        .modal-btn.save   { background: linear-gradient(135deg,var(--pink),var(--pink-deep)); color: white; }
+        .modal-btn.cancel { background: #f2f2f2; color: #999; }
         .modal-btn:active { opacity: 0.85; transform: scale(0.98); }
 
+        /* ── TOC drawer ── */
+        #tocOverlay {
+            position: fixed; inset: 0; background: rgba(30,20,25,0.4);
+            z-index: 1100; display: none;
+        }
+        #tocOverlay.show { display: block; }
+        .toc-drawer {
+            position: absolute; top: 0; left: 0; bottom: 0; width: 78%; max-width: 320px;
+            background: var(--paper); box-shadow: 6px 0 30px rgba(0,0,0,0.15);
+            padding: 20px 0; overflow-y: auto;
+            animation: slideRight 0.22s ease;
+        }
+        @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .toc-header { padding: 0 20px 14px; font-weight: 700; color: var(--pink-deep); font-size: 15px; border-bottom: 1px solid var(--pink-soft); margin-bottom: 8px; }
+        .toc-item {
+            padding: 12px 20px; font-size: 14px; color: #555; cursor: pointer;
+            border-left: 3px solid transparent; touch-action: manipulation;
+        }
+        .toc-item:active { background: var(--pink-soft); }
+        .toc-item.active { color: var(--pink-deep); font-weight: 600; border-left-color: var(--pink); background: #fff5f9; }
+
         /* ── Empty state ── */
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-        .empty-icon  { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
-        .empty-text  { font-size: 18px; margin-bottom: 10px; }
-        .empty-hint  { font-size: 14px; color: #bbb; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #b99; }
+        .empty-icon  { font-size: 60px; margin-bottom: 18px; opacity: 0.45; }
+        .empty-text  { font-size: 17px; margin-bottom: 8px; }
+        .empty-hint  { font-size: 13px; color: #cba; }
 
         /* ── Bottom Nav ── */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; border-top: 2px solid #ffe8f0;
-            padding: 8px 16px;
-            display: none; justify-content: center; align-items: center;
-            gap: 8px; box-shadow: 0 -4px 20px rgba(255,105,180,0.1); z-index: 100;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            border-top: 1px solid var(--pink-soft);
+            padding: 10px 12px;
+            display: none; flex-wrap: wrap; justify-content: center; align-items: center;
+            gap: 7px; z-index: 100;
         }
         .bottom-nav.show { display: flex; }
         .nav-btn {
-            background: linear-gradient(135deg,#ff69b4,#ff1493);
-            color: white; border: none; padding: 7px 14px;
-            border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+            background: linear-gradient(135deg,var(--pink),var(--pink-deep));
+            color: white; border: none; padding: 8px 13px;
+            border-radius: 10px; cursor: pointer; font-size: 12.5px; font-weight: 600;
             font-family: 'Noto Serif SC', serif; touch-action: manipulation; min-height: 38px;
         }
-        .nav-btn.export { background: linear-gradient(135deg,#ffd700,#ffa500); }
+        .nav-btn.export { background: linear-gradient(135deg,#ffd166,#ffab40); }
+        .nav-btn.import { background: linear-gradient(135deg,var(--blue),#357abd); }
+        .nav-btn.note   { background: linear-gradient(135deg,#b18cff,#8a63d2); }
         .nav-btn:disabled { background: #ddd; opacity: 0.5; }
         .nav-btn:active   { transform: scale(0.95); }
-        .nav-info { color: #ff69b4; font-weight: 600; font-size: 13px; min-width: 52px; text-align: center; }
+        .nav-info { color: var(--pink-deep); font-weight: 600; font-size: 12.5px; min-width: 70px; text-align: center; }
 
         @media (max-width: 768px) {
-            .content { padding: 16px 13px; margin-bottom: 70px; }
+            .content { padding: 20px 15px; margin-bottom: 84px; }
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>📖 EA阅读器</h1>
+    <button class="icon-btn" id="tocBtn" title="目录">☰</button>
+    <h1>📖 共读小屋</h1>
+    <div style="width:38px"></div>
 </div>
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
 
 <div class="upload-section" id="uploadSection">
     <div class="upload-area" id="uploadArea">
         <div class="upload-icon">📚</div>
         <div class="upload-text">点击或拖拽上传书籍</div>
-        <div class="upload-hint">支持 TXT 格式</div>
+        <div class="upload-hint">支持 TXT · 自动识别 UTF-8 / GBK / Big5 编码 · 自动智能分章</div>
     </div>
     <input type="file" id="fileInput" accept=".txt">
 </div>
@@ -245,6 +287,14 @@
         <div class="empty-icon">📖</div>
         <div class="empty-text">还没有上传书籍</div>
         <div class="empty-hint">上传一本 TXT 文件开始共读吧 💕</div>
+    </div>
+</div>
+
+<!-- 目录抽屉 -->
+<div id="tocOverlay">
+    <div class="toc-drawer">
+        <div class="toc-header">📑 目录</div>
+        <div id="tocList"></div>
     </div>
 </div>
 
@@ -269,9 +319,37 @@
     </div>
 </div>
 
-<!-- 底部翻页导航 -->
+<!-- 粘贴 Ash 回复 Modal -->
+<div class="overlay" id="importOverlay">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-label">💙 粘贴 Ash 的回复（JSON 格式）</div>
+        <textarea class="comment-input" id="importInput" placeholder='形如：&#10;[&#10;  {"chapter": 0, "index": 4, "text": "这里 Ash 想说的话"},&#10;  {"chapter": 0, "index": 9, "text": "..."}&#10;]'></textarea>
+        <div class="modal-buttons">
+            <button class="modal-btn save"   id="importSaveBtn">导入 💙</button>
+            <button class="modal-btn cancel" id="importCancelBtn">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 剧情笔记 Modal -->
+<div class="overlay" id="noteOverlay">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-label">📝 本章剧情笔记（手动粘贴，帮你快速回忆剧情）</div>
+        <textarea class="comment-input" id="noteInput" placeholder="150-250字左右的剧情摘要，方便下次快速进入状态..."></textarea>
+        <div class="modal-buttons">
+            <button class="modal-btn save"   id="noteSaveBtn">保存</button>
+            <button class="modal-btn cancel" id="noteCancelBtn">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 底部导航 -->
 <div class="bottom-nav" id="bottomNav">
-    <button class="nav-btn export"  id="exportBtn">📋 复制</button>
+    <button class="nav-btn export" id="exportBtn">📋 复制</button>
+    <button class="nav-btn import" id="importBtn">💙 粘贴回复</button>
+    <button class="nav-btn note"   id="noteBtn">📝 笔记</button>
     <button class="nav-btn" id="prevBtnBottom">上一页</button>
     <span  class="nav-info" id="pageInfoBottom">1 / 1</span>
     <button class="nav-btn" id="nextBtnBottom">下一页</button>
